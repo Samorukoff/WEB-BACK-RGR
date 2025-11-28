@@ -7,14 +7,14 @@ from datetime import datetime
 admin_bp = Blueprint('admin', __name__)
 
 # Настройки для загрузки файлов
-UPLOAD_FOLDER = 'static/pic'
-ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif'}
+UPLOAD_FOLDER = os.environ.get('UPLOAD_FOLDER', 
+                              os.path.join(os.path.dirname(os.path.abspath(__file__)), 'static', 'pic'))
+ALLOWED_EXTENSIONS = set(os.environ.get('ALLOWED_EXTENSIONS', 'png,jpg,jpeg').split(','))
 
 # Создаем папку если её нет
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 
 def allowed_file(filename):
-    ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif', 'webp'}
     result = '.' in filename and \
            filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
     print(f"Allowed file check: {filename} -> {result}")  # Отладка
