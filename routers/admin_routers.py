@@ -9,7 +9,7 @@ admin_bp = Blueprint('admin', __name__)
 # Настройки для загрузки файлов
 UPLOAD_FOLDER = os.environ.get('UPLOAD_FOLDER', 
                               os.path.join(os.path.dirname(os.path.abspath(__file__)), 'static', 'pic'))
-ALLOWED_EXTENSIONS = set(os.environ.get('ALLOWED_EXTENSIONS', 'png,jpg,jpeg').split(','))
+ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg'}
 
 # Создаем папку если её нет
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
