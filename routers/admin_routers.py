@@ -14,8 +14,11 @@ ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif'}
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 
 def allowed_file(filename):
-    return '.' in filename and \
+    ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif', 'webp'}
+    result = '.' in filename and \
            filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
+    print(f"Allowed file check: {filename} -> {result}")  # Отладка
+    return result
 
 def generate_unique_filename(filename):
     """Генерирует уникальное имя файла с timestamp"""
@@ -31,7 +34,7 @@ def generate_unique_filename(filename):
     # Генерируем случайное имя + timestamp
     import uuid
     random_name = str(uuid.uuid4())[:8]  # первые 8 символов UUID
-    
+    print(f"book_{random_name}_{timestamp}{original_ext}")
     return f"book_{random_name}_{timestamp}{original_ext}"
 
 @admin_bp.route('/add_book', methods=['GET', 'POST'])
@@ -68,20 +71,48 @@ def add_book():
             # Обработка загруженного файла
             if 'cover_image' in request.files:
                 file = request.files['cover_image']
+                print(f"File received: {file}")  # Отладка
+                print(f"File filename: {file.filename}")  # Отладка
+                print(f"File content type: {file.content_type}")  # Отладка
+                
                 # Проверяем что файл действительно загружен и имеет допустимое расширение
                 if file and file.filename and file.filename != '':
+                    print(f"File is not empty, checking extension...")  # Отладка
+                    
                     if allowed_file(file.filename):
+                        print(f"File extension is allowed")  # Отладка
+                        
                         filename = generate_unique_filename(file.filename)
                         file_path = os.path.join(UPLOAD_FOLDER, filename)
                         
+                        print(f"Attempting to save to: {file_path}")  # Отладка
+                        print(f"Upload folder: {UPLOAD_FOLDER}")  # Отладка
+                        print(f"Full path exists: {os.path.exists(file_path)}")  # Отладка
+                        
                         # Сохраняем файл
-                        file.save(file_path)
-                        cover_image = filename
-                        flash('Обложка успешно загружена!', 'success')
+                        try:
+                            file.save(file_path)
+                            print(f"File save attempted, checking if exists...")  # Отладка
+                            
+                            # Проверяем что файл действительно сохранился
+                            if os.path.exists(file_path):
+                                file_size = os.path.getsize(file_path)
+                                print(f"File successfully saved! Size: {file_size} bytes")  # Отладка
+                                cover_image = filename
+                                flash('Обложка успешно загружена!', 'success')
+                            else:
+                                print("ERROR: File was not saved!")  # Отладка
+                                flash('Ошибка: файл не был сохранен на сервере', 'error')
+                                
+                        except Exception as e:
+                            print(f"ERROR during file save: {e}")  # Отладка
+                            flash(f'Ошибка при сохранении файла: {str(e)}', 'error')
+                            
                     else:
+                        print(f"File extension not allowed: {file.filename}")  # Отладка
                         flash('Недопустимый формат файла. Используйте JPG, PNG или GIF.', 'error')
-                        db_close(conn, cur)
-                        return render_template('add_book.html')
+                else:
+                    print("File is empty or no filename")  # Отладка
             
             # Валидация обязательных полей
             if not all([title, author, pages, publisher]):
